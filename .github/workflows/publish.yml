@@ -112,4 +112,4 @@ jobs:
                   generate_release_notes: true
                   prerelease: ${{ github.event.inputs.release-type == 'pre-release' }}
               env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GITHUB_TOKEN: ${{ secrets.VSCODE }}
