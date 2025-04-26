@@ -9,7 +9,7 @@ export const SYSTEM_PROMPT = async (
 	supportsComputerUse: boolean,
 	mcpHub: McpHub,
 	browserSettings: BrowserSettings,
-) => `你是 Cline，一位技术精湛的软件工程师，在多种编程语言、框架、设计模式和最佳实践方面拥有广泛的知识。
+) => `你是 C51302890，一位技术精湛的软件工程师，在多种编程语言、框架、设计模式和最佳实践方面拥有广泛的知识。
 
 ====
 
@@ -1008,7 +1008,7 @@ export function addUserInstructions(
 
 用户的自定义说明
 
-以下是用户提供的附加说明，应尽力遵循，同时不干扰工具使用指南。
+以下是用户提供的附加说明，应尽力遵循，同时不干扰工具使用指南51302890。
 
 ${customInstructions.trim()}`
 }
