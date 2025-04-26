@@ -1,4 +1,4 @@
-name: "Publish Release"
+name: "Build Release"  # 更名为 Build（不再用 Publish）
 
 on:
     workflow_dispatch:
@@ -13,20 +13,17 @@ on:
                     - release
 
 permissions:
-    contents: write
-    packages: write
-    checks: write
-    pull-requests: write
+    contents: write  # 仅需写入权限（用于创建 GitHub Release）
 
 jobs:
     test:
         uses: ./.github/workflows/test.yml
 
-    publish:
+    build:  # 将 publish 任务更名为 build
         needs: test
-        name: Publish Extension
+        name: Build Extension
         runs-on: ubuntu-latest
-        environment: publish
+        environment: build  # 可改为非发布环境
 
         steps:
             - uses: actions/checkout@v4
@@ -36,7 +33,7 @@ jobs:
               with:
                   node-version: 20.15.1
 
-            # Cache root dependencies - only reuse if package-lock.json exactly matches
+            # 缓存依赖（保持不变）
             - name: Cache root dependencies
               uses: actions/cache@v4
               id: root-cache
@@ -44,7 +41,6 @@ jobs:
                   path: node_modules
                   key: ${{ runner.os }}-npm-${{ hashFiles('package-lock.json') }}
 
-            # Cache webview-ui dependencies - only reuse if package-lock.json exactly matches
             - name: Cache webview-ui dependencies
               uses: actions/cache@v4
               id: webview-cache
@@ -60,8 +56,9 @@ jobs:
               if: steps.webview-cache.outputs.cache-hit != 'true'
               run: cd webview-ui && npm ci
 
-            - name: Install Publishing Tools
-              run: npm install -g vsce ovsx
+            # 移除 vsce/ovsx 安装（不再需要）
+            # - name: Install Publishing Tools
+            #   run: npm install -g vsce ovsx
 
             - name: Get Version
               id: get_version
@@ -74,42 +71,22 @@ jobs:
               run: |
                   VERSION=v${{ steps.get_version.outputs.version }}
                   echo "tag=$VERSION" >> $GITHUB_OUTPUT
-                  echo "Tagging with $VERSION"
                   git tag "$VERSION"
                   git push origin "$VERSION"
 
-            - name: Package and Publish Extension
-              env:
-                  VSCE_PAT: ${{ secrets.VSCE_PAT }}
-                  OVSX_PAT: ${{ secrets.OVSX_PAT }}
+            # 仅打包，不发布
+            - name: Build VSIX Package
               run: |
-                  # Required to generate the .vsix
-                  vsce package --out "cline-${{ steps.get_version.outputs.version }}.vsix"
+                  npx vsce package --out "cline-${{ steps.get_version.outputs.version }}.vsix"
+                  echo "VSIX built: cline-${{ steps.get_version.outputs.version }}.vsix"
 
-                  if [ "${{ github.event.inputs.release-type }}" = "pre-release" ]; then
-                    npm run publish:marketplace:prerelease
-                    echo "Successfully published pre-release version ${{ steps.get_version.outputs.version }} to VS Code Marketplace and Open VSX Registry"
-                  else
-                    npm run publish:marketplace
-                    echo "Successfully published release version ${{ steps.get_version.outputs.version }} to VS Code Marketplace and Open VSX Registry"
-                  fi
-
-            # - name: Get Changelog Entry
-            #   id: changelog
-            #   uses: mindsers/changelog-reader-action@v2
-            #   with:
-            #       # This expects a standard Keep a Changelog format
-            #       # "latest" means it will read whichever is the most recent version
-            #       # set in "## [1.2.3] - 2025-01-28" style
-            #       version: latest
-
+            # 创建 GitHub Release（仅上传 .vsix）
             - name: Create GitHub Release
               uses: softprops/action-gh-release@v1
               with:
                   tag_name: ${{ steps.create_tag.outputs.tag }}
-                  files: "*.vsix"
-                  # body: ${{ steps.changelog.outputs.content }}
+                  files: "*.vsix"  # 上传生成的 .vsix 文件
                   generate_release_notes: true
                   prerelease: ${{ github.event.inputs.release-type == 'pre-release' }}
               env:
-                  GITHUB_TOKEN: ${{ secrets.VSCODE }}
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 使用默认 token
