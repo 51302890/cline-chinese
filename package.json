@@ -11,7 +11,6 @@
 		"name": "HybridTalentComputing"
 	},
 	"license": "Apache-2.0",
-	// "publisher": "HybridTalentComputing",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/HybridTalentComputing/cline-chinese"
